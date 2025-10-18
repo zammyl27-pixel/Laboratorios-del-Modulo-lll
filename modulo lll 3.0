@@ -1,0 +1,118 @@
+Comandos en Windows (PowerShell)
+# ================================
+# LABORATORIO SSH - WINDOWS (HOST)
+# ================================
+
+# 1. Verificar conectividad con la VM (modo Bridge)
+ping 192.168.1.11
+
+# 2. Verificar si el cliente SSH está instalado
+ssh -V
+
+# Si no está instalado, agregar el cliente OpenSSH (ejecutar como Administrador)
+Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+
+# 3. Probar conexión SSH inicial (con contraseña)
+ssh zammyl@192.168.1.11
+# -> introducir contraseña de zammyl
+# -> al terminar, salir con "exit"
+
+# 4. Crear carpeta .ssh (si no existe)
+mkdir $env:USERPROFILE\.ssh -ErrorAction SilentlyContinue
+
+# 5. Generar par de llaves SSH (sin passphrase)
+ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa_oracle
+# -> presionar ENTER dos veces cuando pregunte por passphrase
+
+# 6. Verificar la llave pública generada
+Get-Content $env:USERPROFILE\.ssh\id_rsa_oracle.pub
+
+# 7. Copiar la llave pública al servidor Linux (usa la IP 192.168.1.11)
+scp $env:USERPROFILE\.ssh\id_rsa_oracle.pub zammyl@192.168.1.11:/tmp/id_rsa_oracle.pub
+# -> ingresar contraseña de zammyl
+
+# 8. Probar conexión SSH con autenticación por llave privada
+ssh -i $env:USERPROFILE\.ssh\id_rsa_oracle zammyl@192.168.1.11
+# -> debe entrar sin pedir contraseña
+# -> salir con "exit"
+
+
+Comandos en Oracle Linux 10 (VM)
+# ================================
+# LABORATORIO SSH - ORACLE LINUX 10 (VM)
+# ================================
+
+# 1. Verificar interfaz de red e IP asignada (modo Bridge)
+ip -4 addr show scope global
+
+# Salida esperada (ejemplo):
+# ens160: inet 192.168.1.11/24 brd 192.168.1.255 scope global dynamic noprefixroute ens160
+
+# 2. Instalar y habilitar el servicio SSH
+dnf install -y openssh-server
+systemctl enable --now sshd
+systemctl status sshd --no-pager
+
+# 3. Permitir el servicio SSH en el firewall (si firewalld está activo)
+firewall-cmd --permanent --add-service=ssh
+firewall-cmd --reload
+
+# 4. Validar que el servicio SSH esté escuchando en el puerto 22
+ss -tulnp | grep sshd
+
+# 5. (Después de copiar la llave pública desde Windows)
+# Mover la llave al archivo authorized_keys del usuario
+mkdir -p /home/zammyl/.ssh
+cat /tmp/id_rsa_oracle.pub >> /home/zammyl/.ssh/authorized_keys
+chmod 700 /home/zammyl/.ssh
+chmod 600 /home/zammyl/.ssh/authorized_keys
+chown -R zammyl:zammyl /home/zammyl/.ssh
+rm -f /tmp/id_rsa_oracle.pub
+
+# 6. Verificar permisos y contenido
+ls -l /home/zammyl/.ssh
+cat /home/zammyl/.ssh/authorized_keys
+
+# 7. (Opcional) Revisar logs de SSH para validar autenticación por clave pública
+tail -n 20 /var/log/secure
+journalctl -u sshd --no-pager -n 50
+
+📦 Estructura sugerida para subir a GitHub
+
+Si lo vas a subir como práctica o documentación, puedes organizarlo así:
+
+lab_ssh_keys/
+├── README.md
+├── windows_commands.ps1
+├── linux_commands.sh
+└── screenshots/          # opcional (capturas o evidencias)
+
+📄 README.md
+# Laboratorio: Configuración de acceso SSH con llave pública
+
+## Descripción
+Este laboratorio configura la autenticación SSH entre una máquina Windows 11 (host) y una VM Oracle Linux 10 (guest) usando VMware en modo Bridge.
+
+## Datos del entorno
+- **VM:** Oracle Linux 10  
+- **Host:** Windows 11  
+- **Usuario Linux:** zammyl  
+- **IP de la VM:** 192.168.1.11  
+- **Interfaz:** ens160  
+
+## Pasos principales
+1. Configurar red en modo Bridge.
+2. Habilitar y comprobar SSH en Oracle Linux.
+3. Generar par de llaves SSH en Windows.
+4. Copiar llave pública al servidor.
+5. Verificar acceso sin contraseña.
+
+## Comandos
+Los comandos se encuentran en:
+- `windows_commands.ps1`
+- `linux_commands.sh`
+
+## Resultado esperado
+Conexión SSH automática sin solicitud de credenciales:
+```bash
+ssh -i ~/.ssh/id_rsa_oracle zammyl@192.168.1.11

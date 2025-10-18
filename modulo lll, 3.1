@@ -1,0 +1,120 @@
+#!/bin/bash
+# ===========================================
+# Script: backup_home.sh
+# Descripción: Crea un archivo comprimido (.tar.gz)
+#              del directorio /home/zammyl con la
+#              fecha y hora actual en el nombre.
+# Autor: Zammyl
+# Fecha: $(date '+%d-%m-%Y %H:%M')
+# ===========================================
+
+# Variables
+USUARIO="zammyl"
+FECHA=$(date '+%d-%m-%Y_%H-%M')
+DESTINO="/home/$USUARIO/backups"
+ARCHIVO="backup_${FECHA}.tar.gz"
+
+# Crear carpeta de backups si no existe
+mkdir -p "$DESTINO"
+
+# Crear el comprimido con tar
+tar -czvf "$DESTINO/$ARCHIVO" "/home/$USUARIO"
+
+# Mensaje final
+echo "✅ Backup creado exitosamente: $DESTINO/$ARCHIVO"
+📌 Permisos y ejecución
+
+bash
+Copy code
+chmod +x backup_home.sh
+./backup_home.sh
+📦 Resultado esperado
+Un archivo comprimido, por ejemplo:
+
+swift
+Copy code
+/home/zammyl/backups/backup_17-10-2025_15-45.tar.gz
+🧱 2️⃣ Script: save_ifconfig.sh
+Este script copia la salida de ifconfig (o ip addr show si ifconfig no está instalado)
+y la guarda en el Escritorio con el nombre que el usuario elija.
+
+bash
+Copy code
+#!/bin/bash
+# ===========================================
+# Script: save_ifconfig.sh
+# Descripción: Guarda el resultado del comando
+#              ifconfig en un archivo en el escritorio.
+#              El usuario elige el nombre del archivo.
+# Autor: Zammyl
+# Fecha: $(date '+%d-%m-%Y %H:%M')
+# ===========================================
+
+# Variables
+USUARIO="zammyl"
+ESCRITORIO="/home/$USUARIO/Desktop"
+
+# Crear carpeta si no existe
+mkdir -p "$ESCRITORIO"
+
+# Preguntar al usuario el nombre del archivo
+read -p "📝 Ingresa el nombre del archivo (sin extensión): " NOMBRE
+
+# Ejecutar ifconfig o ip addr show y guardar salida
+if command -v ifconfig &> /dev/null; then
+    ifconfig > "$ESCRITORIO/${NOMBRE}.txt"
+else
+    ip addr show > "$ESCRITORIO/${NOMBRE}.txt"
+fi
+
+echo "✅ Archivo guardado en: $ESCRITORIO/${NOMBRE}.txt"
+📌 Permisos y ejecución
+
+bash
+Copy code
+chmod +x save_ifconfig.sh
+./save_ifconfig.sh
+📦 Resultado esperado
+El script pedirá un nombre y generará, por ejemplo:
+
+bash
+Copy code
+/home/zammyl/Desktop/red_local.txt
+🧾 3️⃣ README.md (para GitHub)
+Guárdalo junto a los scripts 👇
+
+markdown
+Copy code
+# Laboratorio de Scripts en Bash
+
+## Descripción
+Este repositorio contiene dos scripts en Bash usados en Oracle Linux 10 como parte de prácticas de administración del sistema.
+
+---
+
+### 🧱 `backup_home.sh`
+Crea un archivo comprimido `.tar.gz` del directorio `/home/zammyl`, incluyendo la fecha y hora actual en el nombre.
+
+**Uso:**
+```bash
+chmod +x backup_home.sh
+./backup_home.sh
+Ejemplo de resultado:
+
+swift
+Copy code
+/home/zammyl/backups/backup_17-10-2025_15-45.tar.gz
+💻 save_ifconfig.sh
+Guarda el resultado del comando ifconfig o ip addr show en un archivo de texto ubicado en el escritorio, preguntando el nombre del archivo al usuario.
+
+Uso:
+
+bash
+Copy code
+chmod +x save_ifconfig.sh
+./save_ifconfig.sh
+Ejemplo de salida:
+
+bash
+Copy code
+/home/zammyl/Desktop/red_local.txt

@@ -1,0 +1,96 @@
+# Laboratorio: Configuración de acceso SSH con llave pública
+
+## 1. Verificar conexión desde Windows (PowerShell)
+
+Abre PowerShell en Windows 11 y ejecuta:
+
+```powershell
+ping 192.168.1.11
+Si ves respuestas, la red Bridge está bien configurada.
+
+2. En tu VM (Oracle Linux 10) — habilitar SSH
+En la terminal de Oracle Linux (como root):
+
+bash
+Copy code
+dnf install -y openssh-server
+systemctl enable --now sshd
+systemctl status sshd --no-pager
+Luego habilita SSH en el firewall (si aplica):
+
+bash
+Copy code
+firewall-cmd --permanent --add-service=ssh
+firewall-cmd --reload
+3. Desde Windows — probar conexión SSH con contraseña
+En PowerShell:
+
+powershell
+Copy code
+ssh zammyl@192.168.1.11
+Introduce la contraseña del usuario zammyl.
+Si entra correctamente, escribe exit para salir.
+
+4. Generar llaves SSH en Windows
+En PowerShell:
+
+powershell
+Copy code
+# Crear carpeta de claves si no existe
+mkdir $env:USERPROFILE\.ssh -ErrorAction SilentlyContinue
+
+# Generar la clave (sin passphrase, presiona ENTER dos veces)
+ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa_oracle
+Luego verifica la clave pública:
+
+powershell
+Copy code
+Get-Content $env:USERPROFILE\.ssh\id_rsa_oracle.pub
+5. Copiar la llave pública al servidor
+En PowerShell:
+
+powershell
+Copy code
+scp $env:USERPROFILE\.ssh\id_rsa_oracle.pub zammyl@192.168.1.11:/tmp/id_rsa_oracle.pub
+Ingresa la contraseña de zammyl cuando la pida.
+
+6. Configurar la clave en el servidor (Oracle Linux)
+En la VM (como root o usando su - zammyl):
+
+bash
+Copy code
+mkdir -p /home/zammyl/.ssh
+cat /tmp/id_rsa_oracle.pub >> /home/zammyl/.ssh/authorized_keys
+chmod 700 /home/zammyl/.ssh
+chmod 600 /home/zammyl/.ssh/authorized_keys
+chown -R zammyl:zammyl /home/zammyl/.ssh
+rm -f /tmp/id_rsa_oracle.pub
+Verifica los permisos:
+
+bash
+Copy code
+ls -l /home/zammyl/.ssh
+7. Probar conexión sin contraseña
+En Windows PowerShell:
+
+powershell
+Copy code
+ssh -i $env:USERPROFILE\.ssh\id_rsa_oracle zammyl@192.168.1.11
+Si todo está correcto, entrarás directamente sin pedir contraseña.
+Escribe exit para salir.
+
+8. Validación final (opcional)
+En la VM (Oracle Linux 10):
+
+bash
+Copy code
+tail -n 20 /var/log/secure
+
+Conexión SSH automática sin pedir credenciales:
+
+ssh -i $env:USERPROFILE\.ssh\id_rsa_oracle zammyl@192.168.1.11
+
+
+Salida esperada:
+
+[zammyl@oraclelinux ~]$
